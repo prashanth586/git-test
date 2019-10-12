@@ -1,1 +1,16 @@
-this is from windows test file which is created just now
+Steps to guide how to upload a file from the pc
+
+ls				to show list of files
+cd /d				to change the directories
+cd /git				to get into the git folder
+ls				to see list of file in git folder
+giy config --global user-name    enter your username of github account
+git config --global email	enter your email id 
+git clone http://github.com/prashanth586/git-test.git		"pasted url of git hub folder file is downloaded in your folder"
+ls 				to see list of files in git folder in you pc
+cd git-test 			to acccess the cloned data which is in your pc
+ls				to see list of files
+git add test.txt		"newly created file in git folder from pc is added to git account
+git status			to check whether it is succesfully uploaded
+git commit -m "your own message" test.txt		final step of commit
+git push -u origin master 
