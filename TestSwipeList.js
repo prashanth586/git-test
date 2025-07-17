@@ -41,6 +41,9 @@ const TestSwipeList = () => {
     },
   ]);
 
+  // Store measured heights for each row
+  const [rowHeights, setRowHeights] = useState({});
+
   const closeRow = (rowMap, rowKey) => {
     if (rowMap[rowKey]) {
       rowMap[rowKey].closeRow();
@@ -108,8 +111,10 @@ const TestSwipeList = () => {
   };
 
   const HiddenItemWithActions = ({ data, rowMap, onClose, onDelete }) => {
+    const measuredHeight = rowHeights[data.item.rowId];
+    
     return (
-      <View style={styles.rowBack}>
+      <View style={[styles.rowBack, { height: measuredHeight }]}>
         <View style={styles.hiddenContentContainer}>
           <TouchableOpacity
             style={[styles.backRightBtn, styles.backRightBtnLeft]}
@@ -135,8 +140,16 @@ const TestSwipeList = () => {
       addAttachment(data.item.rowId);
     };
 
+    const handleLayout = (event) => {
+      const { height } = event.nativeEvent.layout;
+      setRowHeights(prev => ({
+        ...prev,
+        [data.item.rowId]: height
+      }));
+    };
+
     return (
-      <View style={styles.rowFront}>
+      <View style={styles.rowFront} onLayout={handleLayout}>
         <View style={styles.visibleContentContainer}>
           <TouchableHighlight
             style={styles.rowFrontVisible}
