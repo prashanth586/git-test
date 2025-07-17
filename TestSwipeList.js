@@ -55,6 +55,42 @@ const TestSwipeList = () => {
     setListData(newData);
   };
 
+  const addAttachment = (rowId) => {
+    const attachmentNames = [
+      'document.pdf',
+      'image.jpg',
+      'report.doc',
+      'presentation.ppt',
+      'spreadsheet.xlsx',
+      'video.mp4',
+      'audio.mp3',
+      'archive.zip',
+      'design.sketch',
+      'notes.txt',
+      'contract.pdf',
+      'invoice.pdf',
+      'screenshot.png',
+      'manual.pdf',
+      'data.csv'
+    ];
+    
+    const randomName = attachmentNames[Math.floor(Math.random() * attachmentNames.length)];
+    const timestamp = Date.now();
+    const newFileName = `${randomName.split('.')[0]}_${timestamp}.${randomName.split('.')[1]}`;
+    
+    const newData = listData.map(item => {
+      if (item.rowId === rowId) {
+        return {
+          ...item,
+          attachments: [...(item.attachments || []), newFileName]
+        };
+      }
+      return item;
+    });
+    
+    setListData(newData);
+  };
+
   const onRowDidOpen = (rowKey) => {
     console.log('This row opened', rowKey);
   };
@@ -93,6 +129,10 @@ const TestSwipeList = () => {
       Alert.alert('Attachment', `Clicked on: ${filename}`);
     };
 
+    const handleAddAttachment = () => {
+      addAttachment(data.item.rowId);
+    };
+
     return (
       <View style={styles.rowFront}>
         <TouchableHighlight
@@ -106,19 +146,31 @@ const TestSwipeList = () => {
             
             <Text style={styles.description}>{data.item.description}</Text>
             
-            {data.item.attachments && data.item.attachments.length > 0 && (
-              <View style={styles.attachmentsContainer}>
-                <Text style={styles.attachmentsTitle}>Attachments:</Text>
-                {data.item.attachments.map((filename, index) => (
+            <View style={styles.attachmentsContainer}>
+              <View style={styles.attachmentsHeader}>
+                <Text style={styles.attachmentsTitle}>
+                  Attachments ({data.item.attachments ? data.item.attachments.length : 0}):
+                </Text>
+                <TouchableOpacity
+                  style={styles.addAttachmentButton}
+                  onPress={handleAddAttachment}>
+                  <Text style={styles.addAttachmentText}>+ Add File</Text>
+                </TouchableOpacity>
+              </View>
+              
+              {data.item.attachments && data.item.attachments.length > 0 ? (
+                data.item.attachments.map((filename, index) => (
                   <TouchableOpacity
                     key={index}
                     style={styles.attachmentButton}
                     onPress={() => handleAttachmentPress(filename)}>
                     <Text style={styles.attachmentText}>{filename}</Text>
                   </TouchableOpacity>
-                ))}
-              </View>
-            )}
+                ))
+              ) : (
+                <Text style={styles.noAttachmentsText}>No attachments yet</Text>
+              )}
+            </View>
           </View>
         </TouchableHighlight>
       </View>
@@ -236,10 +288,33 @@ const styles = StyleSheet.create({
   attachmentsContainer: {
     marginTop: 8,
   },
+  attachmentsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
   attachmentsTitle: {
     fontSize: 14,
     fontWeight: '600',
     color: '#333',
+    flex: 1,
+  },
+  addAttachmentButton: {
+    backgroundColor: '#4caf50',
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  addAttachmentText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  noAttachmentsText: {
+    fontSize: 14,
+    color: '#999',
+    fontStyle: 'italic',
     marginBottom: 8,
   },
   attachmentButton: {
