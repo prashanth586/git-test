@@ -17,35 +17,44 @@ const TestSwipeList = () => {
       rowId: '1',
       title: 'Item 1',
       description: 'This is a basic item description',
-      files: [],
+      attachments: [],
     },
     {
       rowId: '2',
       title: 'Item 2',
       description: 'Another item with some content',
-      files: [],
+      attachments: [],
     },
   ]);
   const [loading, setLoading] = useState(false);
 
-  // Generate sample text with 100 characters
-  const generateSampleText = () => {
-    return 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut.';
+  // Generate sample attachment with 100 characters
+  const generateSampleAttachment = () => {
+    const sampleTexts = [
+      'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut.',
+      'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea comm.',
+      'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla.',
+      'Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit an.',
+      'At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium volup.',
+    ];
+    const randomText = sampleTexts[Math.floor(Math.random() * sampleTexts.length)];
+    return {
+      id: Date.now() + Math.random(),
+      name: `attachment_${Date.now()}.pdf`,
+      text: randomText,
+    };
   };
 
-  // Add sample item with long text and files
-  const addSampleItem = () => {
-    const newItem = {
-      rowId: Date.now().toString(),
-      title: `Sample Item ${data.length + 1}`,
-      description: generateSampleText(),
-      files: [
-        {id: 1, name: 'Sample File 1.pdf'},
-        {id: 2, name: 'Sample File 2.jpg'},
-        {id: 3, name: 'Sample File 3.doc'},
-      ],
-    };
-    setData([...data, newItem]);
+  // Add attachment to specific item
+  const addAttachmentToItem = (rowId) => {
+    const newAttachment = generateSampleAttachment();
+    setData(prevData => 
+      prevData.map(item => 
+        item.rowId === rowId 
+          ? {...item, attachments: [...item.attachments, newAttachment]}
+          : item
+      )
+    );
   };
 
   const deleteRow = (rowMap, rowKey) => {
@@ -79,66 +88,96 @@ const TestSwipeList = () => {
     console.log('Right action status changed:', rowKey);
   };
 
+  // Calculate dynamic height based on content
+  const calculateItemHeight = (item) => {
+    const baseHeight = 120; // Base height for title, description, controls
+    const attachmentHeight = item.attachments.length * 45; // Each attachment adds 45px
+    return baseHeight + attachmentHeight;
+  };
+
   const renderItem = (data, rowMap) => {
-    return <VisibleItem data={data} removeRow={() => deleteRow(rowMap, data.item.rowId)} />;
+    const itemHeight = calculateItemHeight(data.item);
+    return (
+      <VisibleItem 
+        data={data} 
+        removeRow={() => deleteRow(rowMap, data.item.rowId)}
+        addAttachment={() => addAttachmentToItem(data.item.rowId)}
+        itemHeight={itemHeight}
+      />
+    );
   };
 
   const renderHiddenItem = (data, rowMap) => {
+    const itemHeight = calculateItemHeight(data.item);
     return (
       <HiddenItemWithActions
         data={data}
         rowMap={rowMap}
         onClose={() => closeRow(rowMap, data.item.rowId)}
         onDelete={() => deleteRow(rowMap, data.item.rowId)}
+        itemHeight={itemHeight}
       />
     );
   };
 
-  const VisibleItem = ({data, removeRow}) => {
+  const VisibleItem = ({data, removeRow, addAttachment, itemHeight}) => {
     return (
-      <View style={styles.rowFront}>
+      <View style={[styles.rowFront, {height: itemHeight}]}>
         <TouchableHighlight
-          style={[styles.rowFrontVisible, styles.shadowBox]}
+          style={[styles.rowFrontVisible, styles.shadowBox, {height: itemHeight}]}
           underlayColor={'#aaa'}>
           <View style={styles.itemContainer}>
             <Text style={styles.title}>{data.item.title}</Text>
             <Text style={styles.description}>{data.item.description}</Text>
             
-            {/* Files list */}
-            {data.item.files.length > 0 && (
-              <View style={styles.filesContainer}>
-                <Text style={styles.filesHeader}>Files:</Text>
-                {data.item.files.map((file, index) => (
-                  <Text key={index} style={styles.fileName}>
-                    • {file.name}
-                  </Text>
-                ))}
-              </View>
-            )}
-            
-            {/* Sample controls */}
+            {/* Rate Selection */}
             <View style={styles.controlsContainer}>
               <Text style={styles.rateLabel}>Rate Selection:</Text>
               <TouchableOpacity style={styles.pickerButton}>
                 <Text style={styles.pickerText}>Select Rate</Text>
               </TouchableOpacity>
             </View>
+
+            {/* Add Attachment Button */}
+            <TouchableOpacity 
+              style={styles.addAttachmentButton} 
+              onPress={addAttachment}
+              activeOpacity={0.7}>
+              <Text style={styles.addAttachmentText}>+ Add Attachment (100 chars)</Text>
+            </TouchableOpacity>
+            
+            {/* Attachments list */}
+            {data.item.attachments.length > 0 && (
+              <View style={styles.attachmentsContainer}>
+                <Text style={styles.attachmentsHeader}>
+                  Attachments ({data.item.attachments.length}):
+                </Text>
+                {data.item.attachments.map((attachment, index) => (
+                  <View key={attachment.id} style={styles.attachmentItem}>
+                    <Text style={styles.attachmentName}>📎 {attachment.name}</Text>
+                    <Text style={styles.attachmentText} numberOfLines={2}>
+                      {attachment.text}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
         </TouchableHighlight>
       </View>
     );
   };
 
-  const HiddenItemWithActions = ({data, rowMap, onClose, onDelete}) => {
+  const HiddenItemWithActions = ({data, rowMap, onClose, onDelete, itemHeight}) => {
     return (
-      <View style={styles.rowBack}>
+      <View style={[styles.rowBack, {height: itemHeight}]}>
         <TouchableOpacity
-          style={[styles.backRightBtn, styles.backRightBtnLeft]}
+          style={[styles.backRightBtn, styles.backRightBtnLeft, {height: itemHeight}]}
           onPress={onClose}>
           <Text style={styles.backTextWhite}>Close</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.backRightBtn, styles.backRightBtnRight]}
+          style={[styles.backRightBtn, styles.backRightBtnRight, {height: itemHeight}]}
           onPress={onDelete}>
           <Text style={styles.backTextWhite}>Delete</Text>
         </TouchableOpacity>
@@ -146,11 +185,21 @@ const TestSwipeList = () => {
     );
   };
 
+  const addNewItem = () => {
+    const newItem = {
+      rowId: Date.now().toString(),
+      title: `New Item ${data.length + 1}`,
+      description: 'This is a new item for testing purposes',
+      attachments: [],
+    };
+    setData([...data, newItem]);
+  };
+
   const footerLayout = () => {
     return (
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.addButton} onPress={addSampleItem}>
-          <Text style={styles.addButtonText}>Add Sample Item (100 chars + files)</Text>
+        <TouchableOpacity style={styles.addButton} onPress={addNewItem}>
+          <Text style={styles.addButtonText}>Add New Item</Text>
         </TouchableOpacity>
       </View>
     );
@@ -160,9 +209,7 @@ const TestSwipeList = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerText}>SwipeList Height Test</Text>
-        <TouchableOpacity style={styles.headerButton} onPress={addSampleItem}>
-          <Text style={styles.headerButtonText}>+ Add Item</Text>
-        </TouchableOpacity>
+        <Text style={styles.headerSubtext}>Tap "Add Attachment" inside cards</Text>
       </View>
 
       <SwipeListView
@@ -196,9 +243,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     padding: 15,
     backgroundColor: '#f8f9fa',
     borderBottomWidth: 1,
@@ -209,16 +253,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
   },
-  headerButton: {
-    backgroundColor: '#007bff',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 5,
-  },
-  headerButtonText: {
-    color: '#fff',
+  headerSubtext: {
     fontSize: 14,
-    fontWeight: '500',
+    color: '#666',
+    marginTop: 4,
   },
   listContainer: {
     flex: 1,
@@ -232,7 +270,6 @@ const styles = StyleSheet.create({
   rowFrontVisible: {
     backgroundColor: '#fff',
     borderRadius: 8,
-    minHeight: 100, // Use minHeight instead of fixed height
     padding: 15,
   },
   shadowBox: {
@@ -258,25 +295,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     lineHeight: 20,
-    marginBottom: 10,
-  },
-  filesContainer: {
-    marginVertical: 10,
-  },
-  filesHeader: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 5,
-  },
-  fileName: {
-    fontSize: 12,
-    color: '#666',
-    marginLeft: 10,
-    marginVertical: 2,
+    marginBottom: 12,
   },
   controlsContainer: {
-    marginTop: 10,
+    marginBottom: 12,
   },
   rateLabel: {
     fontSize: 14,
@@ -295,6 +317,50 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6c757d',
   },
+  addAttachmentButton: {
+    backgroundColor: '#007bff',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+    marginBottom: 12,
+  },
+  addAttachmentText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  attachmentsContainer: {
+    marginTop: 8,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#e9ecef',
+  },
+  attachmentsHeader: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  attachmentItem: {
+    backgroundColor: '#f8f9fa',
+    padding: 10,
+    borderRadius: 6,
+    marginBottom: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#007bff',
+  },
+  attachmentName: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 4,
+  },
+  attachmentText: {
+    fontSize: 12,
+    color: '#666',
+    lineHeight: 16,
+  },
   rowBack: {
     alignItems: 'center',
     backgroundColor: '#DDD',
@@ -305,14 +371,11 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
     marginVertical: 5,
     borderRadius: 8,
-    minHeight: 100, // Same minHeight as front row
   },
   backRightBtn: {
     alignItems: 'center',
-    bottom: 0,
     justifyContent: 'center',
     position: 'absolute',
-    top: 0,
     width: 75,
   },
   backRightBtnLeft: {
