@@ -108,8 +108,14 @@ const TestSwipeList = () => {
   };
 
   const HiddenItemWithActions = ({ data, rowMap, onClose, onDelete }) => {
+    // Calculate the same height as visible item based on attachments
+    const attachmentCount = data.item.attachments ? data.item.attachments.length : 0;
+    const baseHeight = 120; // minHeight from visible item
+    const attachmentHeight = attachmentCount > 0 ? (attachmentCount * 50) + 60 : 40; // height per attachment + header + padding
+    const calculatedHeight = baseHeight + attachmentHeight;
+
     return (
-      <View style={styles.rowBack}>
+      <View style={[styles.rowBack, { height: calculatedHeight }]}>
         <TouchableOpacity
           style={[styles.backRightBtn, styles.backRightBtnLeft]}
           onPress={onClose}>
