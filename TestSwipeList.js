@@ -8,38 +8,90 @@ import {
   StyleSheet,
   Animated,
   Alert,
+  TextInput,
+  Keyboard,
 } from 'react-native';
 import { SwipeListView } from 'react-native-swipe-list-view';
+import RNPickerSelect from 'react-native-picker-select';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const APPWHITE = '#FFFFFF';
+const APPBLACK = '#000000';
+const APPPRIMARYCOLOR = '#1976d2';
+const APPBUTTON = '#4caf50';
+const APPYELLOW = '#ffeb3b';
+const FONT_SIZE_16 = 16;
+const FONT_SIZE_17 = 17;
+const FONT_SIZE_RES_14 = 14;
 
 const TestSwipeList = () => {
   const [listData, setListData] = useState([
     {
-      rowId: '1',
+      rowId: 1,
       rateId: 'rate1',
-      description: 'Project A - Development',
-      attachments: ['document1.pdf', 'image1.jpg']
+      description: 'Project A - Development work',
+      hours: 8.0,
+      startTime: '09:00',
+      endTime: '17:00',
+      nonWorkedTime: '01:00',
+      timesheetFileList: [
+        { fileName: 'document1.pdf', timesheetFileId: 1 },
+        { fileName: 'image1.jpg', timesheetFileId: 2 }
+      ]
     },
     {
-      rowId: '2',
-      rateId: 'rate2',
-      description: 'Project B - Testing and QA',
-      attachments: ['report1.doc', 'screenshot1.png', 'video1.mp4']
+      rowId: 2,
+      rateId: 'rate2', 
+      description: 'Testing and QA activities',
+      hours: 6.0,
+      startTime: '10:00',
+      endTime: '16:00',
+      nonWorkedTime: '00:00',
+      timesheetFileList: [
+        { fileName: 'report1.doc', timesheetFileId: 3 },
+        { fileName: 'screenshot1.png', timesheetFileId: 4 },
+        { fileName: 'video1.mp4', timesheetFileId: 5 }
+      ]
     },
     {
-      rowId: '3',
+      rowId: 3,
       rateId: 'rate3',
-      description: 'Project C - Design Review',
-      attachments: ['design1.sketch']
+      description: 'Design Review Meeting',
+      hours: 4.0,
+      startTime: '14:00',
+      endTime: '18:00',
+      nonWorkedTime: '00:00',
+      timesheetFileList: [
+        { fileName: 'design1.sketch', timesheetFileId: 6 }
+      ]
     },
     {
-      rowId: '4',
+      rowId: 4,
       rateId: 'rate4',
-      description: 'Project D - Client Meeting and Documentation',
-      attachments: ['notes1.txt', 'presentation1.ppt', 'contract1.pdf', 'invoice1.pdf']
+      description: 'Client Meeting and Documentation',
+      hours: 7.5,
+      startTime: '08:30',
+      endTime: '16:30',
+      nonWorkedTime: '00:30',
+      timesheetFileList: [
+        { fileName: 'notes1.txt', timesheetFileId: 7 },
+        { fileName: 'presentation1.ppt', timesheetFileId: 8 },
+        { fileName: 'contract1.pdf', timesheetFileId: 9 },
+        { fileName: 'invoice1.pdf', timesheetFileId: 10 }
+      ]
     },
   ]);
+
+  // Rate list for picker
+  const [rateListArr] = useState([
+    { label: 'Standard Rate', value: 'rate1' },
+    { label: 'Overtime Rate', value: 'rate2' },
+    { label: 'Holiday Rate', value: 'rate3' },
+    { label: 'Premium Rate', value: 'rate4' },
+  ]);
+
+  // Time mode (similar to your original)
+  const [time] = useState('Y'); // Y for time entry, N for hours only
 
   // Store measured heights for each row
   const [rowHeights, setRowHeights] = useState({});
@@ -84,12 +136,13 @@ const TestSwipeList = () => {
     const randomName = attachmentNames[Math.floor(Math.random() * attachmentNames.length)];
     const timestamp = Date.now();
     const newFileName = `${randomName.split('.')[0]}_${timestamp}.${randomName.split('.')[1]}`;
+    const newFileId = Math.floor(Math.random() * 1000) + 100; // Random file ID
     
     const newData = listData.map(item => {
       if (item.rowId === rowId) {
         return {
           ...item,
-          attachments: [...(item.attachments || []), newFileName]
+          timesheetFileList: [...(item.timesheetFileList || []), { fileName: newFileName, timesheetFileId: newFileId }]
         };
       }
       return item;
@@ -97,6 +150,46 @@ const TestSwipeList = () => {
     
     setListData(newData);
     setChanged(prev => prev + 1); // Force re-render
+  };
+
+  const handleRateSelect = (rowId, rateSelectedId) => {
+    const newData = listData.map(item => {
+      if (item.rowId === rowId) {
+        return {
+          ...item,
+          rateId: rateSelectedId
+        };
+      }
+      return item;
+    });
+    setListData(newData);
+    setChanged(prev => prev + 1);
+  };
+
+  const handleHoursChange = (rowId, hours) => {
+    const newData = listData.map(item => {
+      if (item.rowId === rowId) {
+        return {
+          ...item,
+          hours: parseFloat(hours) || 0.0
+        };
+      }
+      return item;
+    });
+    setListData(newData);
+  };
+
+  const handleDescriptionChange = (rowId, description) => {
+    const newData = listData.map(item => {
+      if (item.rowId === rowId) {
+        return {
+          ...item,
+          description: description
+        };
+      }
+      return item;
+    });
+    setListData(newData);
   };
 
   const onRowDidOpen = (rowKey) => {
@@ -119,32 +212,32 @@ const TestSwipeList = () => {
     const measuredHeight = rowHeights[data.item.rowId];
     
     return (
-      <View style={[styles.rowBack, { height: measuredHeight }]}>
-        <View style={styles.hiddenContentContainer}>
-          <TouchableOpacity
-            style={[styles.backRightBtn, styles.backRightBtnLeft]}
-            onPress={onClose}>
-            <Text style={styles.backTextWhite}>Close</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.backRightBtn, styles.backRightBtnRight]}
-            onPress={onDelete}>
-            <Text style={styles.backTextWhite}>Delete</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+      <Animated.View style={[styles.rowBack, { height: measuredHeight }]}>
+        <TouchableOpacity
+          style={[styles.backRightBtn, styles.backRightBtnLeft]}
+          onPress={onClose}>
+          <MaterialCommunityIcons
+            name="close-circle-outline"
+            size={25}
+            style={styles.trash}
+            color="#fff"
+          />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.backRightBtn, styles.backRightBtnRight]}
+          onPress={onDelete}>
+          <MaterialCommunityIcons
+            name="trash-can-outline"
+            size={25}
+            style={styles.trash}
+            color="#fff"
+          />
+        </TouchableOpacity>
+      </Animated.View>
     );
   };
 
   const VisibleItem = ({ data }) => {
-    const handleAttachmentPress = (filename) => {
-      Alert.alert('Attachment', `Clicked on: ${filename}`);
-    };
-
-    const handleAddAttachment = () => {
-      addAttachment(data.item.rowId);
-    };
-
     const handleLayout = (event) => {
       const { height } = event.nativeEvent.layout;
       setRowHeights(prev => ({
@@ -154,48 +247,206 @@ const TestSwipeList = () => {
     };
 
     return (
-      <View style={styles.rowFront} onLayout={handleLayout}>
-        <View style={styles.visibleContentContainer}>
-          <TouchableHighlight
-            style={styles.rowFrontVisible}
-            underlayColor={'#aaa'}>
-            <View style={styles.cardContent}>
-              <View style={styles.header}>
-                <Text style={styles.itemDescription}>Task Details</Text>
-                <Text style={styles.rateText}>Rate ID: {data.item.rateId}</Text>
-              </View>
-              
-              <Text style={styles.description}>{data.item.description}</Text>
-              
-              <View style={styles.attachmentsContainer}>
-                <View style={styles.attachmentsHeader}>
-                  <Text style={styles.attachmentsTitle}>
-                    Attachments ({data.item.attachments ? data.item.attachments.length : 0}):
+      <Animated.View
+        style={[
+          time === 'N' ? styles.rowFront : styles.rowFrontTime
+        ]}
+        onLayout={handleLayout}>
+        <TouchableHighlight
+          style={[
+            time === 'N' ? styles.rowFrontVisible : styles.rowFrontVisibleTime,
+            styles.shadowBox,
+          ]}
+          underlayColor={'#aaa'}>
+          <View>
+            <View style={{flexDirection: 'row', alignItems: 'center'}}>
+              <Text style={styles.itemDescription}>Rates</Text>
+              <RNPickerSelect
+                placeholder={{
+                  label: 'Select a rate...',
+                  value: '',
+                  color: '#9EA0A4',
+                }}
+                useNativeAndroidPickerStyle={false}
+                style={pickerSelectStyles}
+                value={data.item.rateId}
+                items={rateListArr}
+                onValueChange={(itemValue) =>
+                  handleRateSelect(data.item.rowId, itemValue)
+                }></RNPickerSelect>
+            </View>
+
+            {time === 'Y' ? (
+              <View>
+                <View style={styles.timeEntry}>
+                  <Text style={styles.itemDescription}>Start Time</Text>
+                  <TouchableHighlight
+                    style={[
+                      styles.inputStyle,
+                      {justifyContent: 'center', alignItems: 'center'},
+                    ]}>
+                    <Text style={styles.timeStyle}>{data.item.startTime}</Text>
+                  </TouchableHighlight>
+
+                  <Text style={[styles.itemDescription, {marginLeft: 10}]}>
+                    End Time
                   </Text>
-                  <TouchableOpacity
-                    style={styles.addAttachmentButton}
-                    onPress={handleAddAttachment}>
-                    <Text style={styles.addAttachmentText}>+ Add File</Text>
-                  </TouchableOpacity>
+                  <TouchableHighlight
+                    style={[
+                      styles.inputStyle,
+                      {justifyContent: 'center', alignItems: 'center'},
+                    ]}>
+                    <Text style={styles.timeStyle}>{data.item.endTime}</Text>
+                  </TouchableHighlight>
                 </View>
-                
-                {data.item.attachments && data.item.attachments.length > 0 ? (
-                  data.item.attachments.map((filename, index) => (
-                    <TouchableOpacity
-                      key={index}
-                      style={styles.attachmentButton}
-                      onPress={() => handleAttachmentPress(filename)}>
-                      <Text style={styles.attachmentText}>{filename}</Text>
-                    </TouchableOpacity>
-                  ))
-                ) : (
-                  <Text style={styles.noAttachmentsText}>No attachments yet</Text>
-                )}
+                <View style={styles.timeEntry}>
+                  <Text style={styles.itemDescription}>Break Time</Text>
+                  <TouchableHighlight
+                    style={[
+                      styles.inputStyle,
+                      {justifyContent: 'center', alignItems: 'center'},
+                    ]}>
+                    <Text style={styles.timeStyle}>
+                      {data.item.nonWorkedTime}
+                    </Text>
+                  </TouchableHighlight>
+                </View> 
+
+                <View style={styles.timeEntry}>
+                  <Text style={styles.itemDescription}>Time Worked</Text>
+                  <TextInput
+                    style={styles.inputStyle}
+                    autoCapitalize="none"
+                    numberOfLines={1}
+                    onChangeText={(hours) =>
+                      handleHoursChange(
+                        data.item.rowId,
+                        hours == '' ? 0.0 : hours,
+                      )
+                    }
+                    placeholder="0.0"
+                    defaultValue={parseFloat(data.item.hours).toFixed(2)}
+                    textAlign={'center'}
+                    scrollEnabled={false}
+                    keyboardType="numeric"
+                    returnKeyType="next"
+                    underlineColorAndroid="transparent"
+                    onSubmitEditing={Keyboard.dismiss}
+                    blurOnSubmit={false}
+                  />
+                </View>
+              </View>
+            ) : (
+              <View style={styles.timeEntry}>
+                <Text style={styles.itemDescription}>Time Worked</Text>
+                <TextInput
+                  style={styles.inputStyle}
+                  autoCapitalize="none"
+                  numberOfLines={1}
+                  onChangeText={(hours) =>
+                    handleHoursChange(
+                      data.item.rowId,
+                      hours == '' ? 0.0 : hours,
+                    )
+                  }
+                  placeholder="0.00"
+                  defaultValue={parseFloat(data.item.hours).toFixed(2)}
+                  textAlign={'center'}
+                  scrollEnabled={false}
+                  keyboardType="numeric"
+                  returnKeyType="next"
+                  underlineColorAndroid="transparent"
+                  onSubmitEditing={Keyboard.dismiss}
+                  blurOnSubmit={false}
+                />
+              </View>
+            )}
+            <View style={styles.timeEntry}>
+              <Text style={styles.itemDescription}>Description</Text>
+              <TextInput
+                style={[
+                  styles.inputStyle,
+                  {height: 50, flex: 1, marginBottom: 10},
+                ]}
+                autoCapitalize="none"
+                numberOfLines={4}
+                onChangeText={(value) =>
+                  handleDescriptionChange(data.item.rowId, value)
+                }
+                defaultValue={data.item.description}
+                maxLength={200}
+                multiline={true}
+                scrollEnabled={false}
+                keyboardType="default"
+                returnKeyType="next"
+                underlineColorAndroid="transparent"
+                onSubmitEditing={Keyboard.dismiss}
+                blurOnSubmit={false}
+              />
+            </View>
+
+            {/* for uploading attachments */}
+            <View style={styles.timeEntry}>
+              <Text style={styles.itemDescription}>Upload File</Text>
+              <View style={{marginLeft: 20, alignContent: 'flex-start'}}>
+                <TouchableOpacity
+                  style={{
+                    width: 100,
+                    borderWidth: 1,
+                    alignItems: 'center',
+                    borderRadius: 5,
+                    backgroundColor: APPYELLOW,
+                  }}
+                  onPress={() => addAttachment(data.item.rowId)}>
+                  <Text>Choose Files</Text>
+                </TouchableOpacity>
               </View>
             </View>
-          </TouchableHighlight>
-        </View>
-      </View>
+
+            {/* Display attached files */}
+            {data.item.timesheetFileList && data.item.timesheetFileList.length > 0 && (
+              <View
+                style={{
+                  flexDirection: 'col',
+                  alignItems: 'flex-start',
+                  marginBottom: 10,
+                }}>
+                <View style={{width: '100%'}}>
+                  <Text style={styles.itemDescription}>Download Files</Text>
+                </View>
+                <View style={{width: '100%'}}>
+                  {data.item.timesheetFileList?.map((file, index) => (
+                    <TouchableOpacity
+                      key={file.timesheetFileId || index}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        paddingVertical: 6,
+                        borderBottomWidth: 0.5,
+                        borderColor: '#ccc',
+                      }}
+                      onPress={() =>
+                        Alert.alert('File Download', `Downloading: ${file.fileName}`)
+                      }>
+                      <Text
+                        style={[styles.fileText, {flex: 1}]}
+                        numberOfLines={1}>
+                        {file.fileName}
+                      </Text>
+                      <MaterialCommunityIcons
+                        name="download"
+                        size={18}
+                        color={APPPRIMARYCOLOR}
+                        style={{marginLeft: 10}}
+                      />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            )}
+          </View>
+        </TouchableHighlight>
+      </Animated.View>
     );
   };
 
@@ -252,9 +503,7 @@ const TestSwipeList = () => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 20,
+    margin: 5,
   },
   title: {
     fontSize: 24,
@@ -263,138 +512,149 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     color: '#333',
   },
+  shadowBox: {
+    backgroundColor: APPWHITE,
+    borderRadius: 5,
+    shadowColor: APPBLACK,
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.8,
+    shadowRadius: 2,
+    elevation: 5,
+    justifyContent: 'center',
+  },
   rowFront: {
     backgroundColor: '#FFF',
-    borderRadius: 12,
+    borderRadius: 5,
+    margin: 5,
     marginBottom: 15,
-    marginHorizontal: 10,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    shadowColor: '#999',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.8,
+    shadowRadius: 2,
     elevation: 5,
-    flex: 1,
   },
-  visibleContentContainer: {
-    flex: 1,
+  rowFrontTime: {
+    backgroundColor: '#FFF',
+    borderRadius: 5,
+    margin: 5,
+    marginBottom: 15,
+    shadowColor: '#999',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.8,
+    shadowRadius: 2,
+    elevation: 5,
   },
   rowFrontVisible: {
-    borderRadius: 12,
-    minHeight: 120,
-    flex: 1,
+    backgroundColor: '#FFF',
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 15,
   },
-  cardContent: {
-    padding: 16,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  itemDescription: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  rateText: {
-    fontSize: 14,
-    color: '#666',
-    backgroundColor: '#f0f0f0',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  description: {
-    fontSize: 16,
-    color: '#555',
-    marginBottom: 12,
-    lineHeight: 22,
-  },
-  attachmentsContainer: {
-    marginTop: 8,
-  },
-  attachmentsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  attachmentsTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    flex: 1,
-  },
-  addAttachmentButton: {
-    backgroundColor: '#4caf50',
-    borderRadius: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  addAttachmentText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  noAttachmentsText: {
-    fontSize: 14,
-    color: '#999',
-    fontStyle: 'italic',
-    marginBottom: 8,
-  },
-  attachmentButton: {
-    backgroundColor: '#e3f2fd',
-    borderWidth: 1,
-    borderColor: '#2196f3',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginBottom: 6,
-    alignSelf: 'flex-start',
-  },
-  attachmentText: {
-    color: '#1976d2',
-    fontSize: 14,
-    fontWeight: '500',
+  rowFrontVisibleTime: {
+    backgroundColor: '#FFF',
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 15,
   },
   rowBack: {
+    alignItems: 'center',
     backgroundColor: '#DDD',
-    borderRadius: 12,
-    marginBottom: 15,
-    marginHorizontal: 10,
-    flex: 1,
-  },
-  hiddenContentContainer: {
     flex: 1,
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
     paddingLeft: 15,
+    paddingRight: 17,
+    margin: 5,
+    marginBottom: 15,
+    borderRadius: 5,
   },
   backRightBtn: {
-    alignItems: 'center',
+    alignItems: 'flex-end',
     bottom: 0,
     justifyContent: 'center',
     position: 'absolute',
     top: 0,
     width: 75,
-    borderRadius: 12,
+    paddingRight: 17,
   },
   backRightBtnLeft: {
     backgroundColor: '#1f65ff',
     right: 75,
   },
   backRightBtnRight: {
-    backgroundColor: '#ff1744',
+    backgroundColor: 'red',
     right: 0,
+    borderTopRightRadius: 5,
+    borderBottomRightRadius: 5,
   },
-  backTextWhite: {
-    color: '#FFF',
+  trash: {
+    height: 25,
+    width: 25,
+    marginRight: 7,
+  },
+  itemDescription: {
+    fontSize: FONT_SIZE_16,
+    color: APPBLACK,
     fontWeight: 'bold',
+    flexWrap: 'wrap',
+    textAlign: 'justify',
+  },
+  timeStyle: {
+    fontSize: FONT_SIZE_RES_14,
+    color: APPBLACK,
+    fontWeight: 'bold',
+    alignContent: 'center',
+    alignItems: 'center',
+  },
+  inputStyle: {
+    fontSize: FONT_SIZE_RES_14,
+    borderRadius: 10,
+    marginLeft: 5,
+    width: 70,
+    color: APPBLACK,
+    fontWeight: 'bold',
+    height: 42,
+    alignContent: 'center',
+    borderColor: APPPRIMARYCOLOR,
+    borderWidth: 1,
+  },
+  timeEntry: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    marginTop: 10,
+  },
+  fileText: {
+    fontSize: FONT_SIZE_16,
+    color: '#000',
+    marginRight: 8,
+  },
+});
+
+const pickerSelectStyles = StyleSheet.create({
+  inputIOS: {
+    fontSize: FONT_SIZE_RES_14,
+    paddingVertical: 2,
+    paddingHorizontal: 0,
+    borderWidth: 1,
+    width: 200,
+    color: APPBLACK,
+    paddingLeft: 10,
+    borderColor: APPPRIMARYCOLOR,
+    borderRadius: 10,
+    marginLeft: 10,
+  },
+  inputAndroid: {
+    fontSize: FONT_SIZE_RES_14,
+    paddingVertical: 2,
+    paddingHorizontal: 0,
+    borderWidth: 1,
+    width: 200,
+    color: APPBLACK,
+    paddingLeft: 10,
+    borderColor: APPPRIMARYCOLOR,
+    borderRadius: 10,
+    marginLeft: 10,
   },
 });
 
