@@ -43,6 +43,9 @@ const TestSwipeList = () => {
 
   // Store measured heights for each row
   const [rowHeights, setRowHeights] = useState({});
+  
+  // Counter to force re-render and height recalculation
+  const [changed, setChanged] = useState(0);
 
   const closeRow = (rowMap, rowKey) => {
     if (rowMap[rowKey]) {
@@ -56,6 +59,7 @@ const TestSwipeList = () => {
     const prevIndex = listData.findIndex(item => item.rowId === rowKey);
     newData.splice(prevIndex, 1);
     setListData(newData);
+    setChanged(prev => prev + 1); // Force re-render
   };
 
   const addAttachment = (rowId) => {
@@ -92,6 +96,7 @@ const TestSwipeList = () => {
     });
     
     setListData(newData);
+    setChanged(prev => prev + 1); // Force re-render
   };
 
   const onRowDidOpen = (rowKey) => {
@@ -222,6 +227,8 @@ const TestSwipeList = () => {
           style={{ marginBottom: 30 }}
           showsVerticalScrollIndicator={false}
           data={listData}
+          key={changed}
+          extraData={changed}
           renderItem={renderItem}
           keyExtractor={(item, index) => item.rowId}
           renderHiddenItem={renderHiddenItem}
