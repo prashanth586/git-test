@@ -108,24 +108,20 @@ const TestSwipeList = () => {
   };
 
   const HiddenItemWithActions = ({ data, rowMap, onClose, onDelete }) => {
-    // Calculate the same height as visible item based on attachments
-    const attachmentCount = data.item.attachments ? data.item.attachments.length : 0;
-    const baseHeight = 120; // minHeight from visible item
-    const attachmentHeight = attachmentCount > 0 ? (attachmentCount * 50) + 60 : 40; // height per attachment + header + padding
-    const calculatedHeight = baseHeight + attachmentHeight;
-
     return (
-      <View style={[styles.rowBack, { height: calculatedHeight }]}>
-        <TouchableOpacity
-          style={[styles.backRightBtn, styles.backRightBtnLeft]}
-          onPress={onClose}>
-          <Text style={styles.backTextWhite}>Close</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.backRightBtn, styles.backRightBtnRight]}
-          onPress={onDelete}>
-          <Text style={styles.backTextWhite}>Delete</Text>
-        </TouchableOpacity>
+      <View style={styles.rowBack}>
+        <View style={styles.hiddenContentContainer}>
+          <TouchableOpacity
+            style={[styles.backRightBtn, styles.backRightBtnLeft]}
+            onPress={onClose}>
+            <Text style={styles.backTextWhite}>Close</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.backRightBtn, styles.backRightBtnRight]}
+            onPress={onDelete}>
+            <Text style={styles.backTextWhite}>Delete</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   };
@@ -141,44 +137,46 @@ const TestSwipeList = () => {
 
     return (
       <View style={styles.rowFront}>
-        <TouchableHighlight
-          style={styles.rowFrontVisible}
-          underlayColor={'#aaa'}>
-          <View style={styles.cardContent}>
-            <View style={styles.header}>
-              <Text style={styles.itemDescription}>Task Details</Text>
-              <Text style={styles.rateText}>Rate ID: {data.item.rateId}</Text>
-            </View>
-            
-            <Text style={styles.description}>{data.item.description}</Text>
-            
-            <View style={styles.attachmentsContainer}>
-              <View style={styles.attachmentsHeader}>
-                <Text style={styles.attachmentsTitle}>
-                  Attachments ({data.item.attachments ? data.item.attachments.length : 0}):
-                </Text>
-                <TouchableOpacity
-                  style={styles.addAttachmentButton}
-                  onPress={handleAddAttachment}>
-                  <Text style={styles.addAttachmentText}>+ Add File</Text>
-                </TouchableOpacity>
+        <View style={styles.visibleContentContainer}>
+          <TouchableHighlight
+            style={styles.rowFrontVisible}
+            underlayColor={'#aaa'}>
+            <View style={styles.cardContent}>
+              <View style={styles.header}>
+                <Text style={styles.itemDescription}>Task Details</Text>
+                <Text style={styles.rateText}>Rate ID: {data.item.rateId}</Text>
               </View>
               
-              {data.item.attachments && data.item.attachments.length > 0 ? (
-                data.item.attachments.map((filename, index) => (
+              <Text style={styles.description}>{data.item.description}</Text>
+              
+              <View style={styles.attachmentsContainer}>
+                <View style={styles.attachmentsHeader}>
+                  <Text style={styles.attachmentsTitle}>
+                    Attachments ({data.item.attachments ? data.item.attachments.length : 0}):
+                  </Text>
                   <TouchableOpacity
-                    key={index}
-                    style={styles.attachmentButton}
-                    onPress={() => handleAttachmentPress(filename)}>
-                    <Text style={styles.attachmentText}>{filename}</Text>
+                    style={styles.addAttachmentButton}
+                    onPress={handleAddAttachment}>
+                    <Text style={styles.addAttachmentText}>+ Add File</Text>
                   </TouchableOpacity>
-                ))
-              ) : (
-                <Text style={styles.noAttachmentsText}>No attachments yet</Text>
-              )}
+                </View>
+                
+                {data.item.attachments && data.item.attachments.length > 0 ? (
+                  data.item.attachments.map((filename, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={styles.attachmentButton}
+                      onPress={() => handleAttachmentPress(filename)}>
+                      <Text style={styles.attachmentText}>{filename}</Text>
+                    </TouchableOpacity>
+                  ))
+                ) : (
+                  <Text style={styles.noAttachmentsText}>No attachments yet</Text>
+                )}
+              </View>
             </View>
-          </View>
-        </TouchableHighlight>
+          </TouchableHighlight>
+        </View>
       </View>
     );
   };
@@ -258,10 +256,15 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
+    flex: 1,
+  },
+  visibleContentContainer: {
+    flex: 1,
   },
   rowFrontVisible: {
     borderRadius: 12,
     minHeight: 120,
+    flex: 1,
   },
   cardContent: {
     padding: 16,
@@ -339,15 +342,18 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   rowBack: {
-    alignItems: 'center',
     backgroundColor: '#DDD',
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingLeft: 15,
     borderRadius: 12,
     marginBottom: 15,
     marginHorizontal: 10,
+    flex: 1,
+  },
+  hiddenContentContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingLeft: 15,
   },
   backRightBtn: {
     alignItems: 'center',
