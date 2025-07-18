@@ -99,6 +99,12 @@ const TestSwipeList = () => {
   // Counter to force re-render and height recalculation
   const [changed, setChanged] = useState(0);
 
+  // Mock states for functionality
+  const [modalVisible, setModalVisible] = useState(false);
+  const [attachmentModalVisible, setAttachmentModalVisible] = useState(false);
+  const [singleFile, setSingleFile] = useState({});
+  const [previewImageUri, setPreviewImageUri] = useState(null);
+
   const closeRow = (rowMap, rowKey) => {
     if (rowMap[rowKey]) {
       rowMap[rowKey].closeRow();
@@ -166,7 +172,7 @@ const TestSwipeList = () => {
     setChanged(prev => prev + 1);
   };
 
-  const handleHoursChange = (rowId, hours) => {
+  const handleHoursWithoutTime = (rowId, hours) => {
     const newData = listData.map(item => {
       if (item.rowId === rowId) {
         return {
@@ -179,7 +185,7 @@ const TestSwipeList = () => {
     setListData(newData);
   };
 
-  const handleDescriptionChange = (rowId, description) => {
+  const handleDescription = (rowId, description) => {
     const newData = listData.map(item => {
       if (item.rowId === rowId) {
         return {
@@ -191,6 +197,27 @@ const TestSwipeList = () => {
     });
     setListData(newData);
   };
+
+  const handleTimeChange = (rowId, time, type) => {
+    Alert.alert('Time Picker', `Would open time picker for ${type} time`);
+  };
+
+  const handlePreview = (item) => {
+    Alert.alert('Preview', `Preview for ${item.fileName}`);
+  };
+
+  const handleDelete = (fileName, rowId) => {
+    Alert.alert('Delete', `Delete ${fileName} from row ${rowId}`);
+  };
+
+  const handleManualTimesheetDownload = (fileId, fileName) => {
+    Alert.alert('Download', `Download ${fileName}`);
+  };
+
+  // Mock functions
+  const captureImage = () => Alert.alert('Camera', 'Camera would open');
+  const selectMultiFiles = () => Alert.alert('Files', 'File picker would open');
+  const openImagePicker = () => Alert.alert('Images', 'Image picker would open');
 
   const onRowDidOpen = (rowKey) => {
     console.log('This row opened', rowKey);
@@ -212,32 +239,24 @@ const TestSwipeList = () => {
     const measuredHeight = rowHeights[data.item.rowId];
     
     return (
-      <Animated.View style={[styles.rowBack, { height: measuredHeight }]}>
-        <TouchableOpacity
-          style={[styles.backRightBtn, styles.backRightBtnLeft]}
-          onPress={onClose}>
-          <MaterialCommunityIcons
-            name="close-circle-outline"
-            size={25}
-            style={styles.trash}
-            color="#fff"
-          />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.backRightBtn, styles.backRightBtnRight]}
-          onPress={onDelete}>
-          <MaterialCommunityIcons
-            name="trash-can-outline"
-            size={25}
-            style={styles.trash}
-            color="#fff"
-          />
-        </TouchableOpacity>
-      </Animated.View>
+      <View style={[styles.rowBack, { height: measuredHeight }]}>
+        <View style={styles.hiddenContentContainer}>
+          <TouchableOpacity
+            style={[styles.backRightBtn, styles.backRightBtnLeft]}
+            onPress={onClose}>
+            <Text style={styles.backTextWhite}>Close</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.backRightBtn, styles.backRightBtnRight]}
+            onPress={onDelete}>
+            <Text style={styles.backTextWhite}>Delete</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     );
   };
 
-  const VisibleItem = ({ data }) => {
+  const VisibleItem = ({data}) => {
     const handleLayout = (event) => {
       const { height } = event.nativeEvent.layout;
       setRowHeights(prev => ({
@@ -247,206 +266,268 @@ const TestSwipeList = () => {
     };
 
     return (
-      <Animated.View
-        style={[
-          time === 'N' ? styles.rowFront : styles.rowFrontTime
-        ]}
-        onLayout={handleLayout}>
-        <TouchableHighlight
-          style={[
-            time === 'N' ? styles.rowFrontVisible : styles.rowFrontVisibleTime,
-            styles.shadowBox,
-          ]}
-          underlayColor={'#aaa'}>
-          <View>
-            <View style={{flexDirection: 'row', alignItems: 'center'}}>
-              <Text style={styles.itemDescription}>Rates</Text>
-              <RNPickerSelect
-                placeholder={{
-                  label: 'Select a rate...',
-                  value: '',
-                  color: '#9EA0A4',
-                }}
-                useNativeAndroidPickerStyle={false}
-                style={pickerSelectStyles}
-                value={data.item.rateId}
-                items={rateListArr}
-                onValueChange={(itemValue) =>
-                  handleRateSelect(data.item.rowId, itemValue)
-                }></RNPickerSelect>
-            </View>
-
-            {time === 'Y' ? (
+      <View style={time === 'N' ? styles.rowFront : styles.rowFrontTime} onLayout={handleLayout}>
+        <View style={styles.visibleContentContainer}>
+          <TouchableHighlight
+            style={time === 'N' ? styles.rowFrontVisible : styles.rowFrontVisibleTime}
+            underlayColor={'#aaa'}>
+            <View style={styles.cardContent}>
               <View>
-                <View style={styles.timeEntry}>
-                  <Text style={styles.itemDescription}>Start Time</Text>
-                  <TouchableHighlight
-                    style={[
-                      styles.inputStyle,
-                      {justifyContent: 'center', alignItems: 'center'},
-                    ]}>
-                    <Text style={styles.timeStyle}>{data.item.startTime}</Text>
-                  </TouchableHighlight>
-
-                  <Text style={[styles.itemDescription, {marginLeft: 10}]}>
-                    End Time
-                  </Text>
-                  <TouchableHighlight
-                    style={[
-                      styles.inputStyle,
-                      {justifyContent: 'center', alignItems: 'center'},
-                    ]}>
-                    <Text style={styles.timeStyle}>{data.item.endTime}</Text>
-                  </TouchableHighlight>
+                <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                  <Text style={styles.itemDescription}>Rates</Text>
+                  <RNPickerSelect
+                    placeholder={{
+                      label: 'Select a rate...',
+                      value: '',
+                      color: '#9EA0A4',
+                    }}
+                    useNativeAndroidPickerStyle={false}
+                    style={pickerSelectStyles}
+                    value={data.item.rateId}
+                    items={rateListArr}
+                    onValueChange={(itemValue) =>
+                      handleRateSelect(data.item.rowId, itemValue)
+                    }></RNPickerSelect>
                 </View>
+
+                {time === 'Y' ? (
+                  <View>
+                    <View style={styles.timeEntry}>
+                      <Text style={styles.itemDescription}>Start Time</Text>
+                      <TouchableHighlight
+                        onPress={() =>
+                          handleTimeChange(
+                            data.item.rowId,
+                            data.item.startTime,
+                            'start',
+                          )
+                        }
+                        style={[
+                          styles.inputStyle,
+                          {justifyContent: 'center', alignItems: 'center'},
+                        ]}>
+                        <Text style={styles.timeStyle}>{data.item.startTime}</Text>
+                      </TouchableHighlight>
+
+                      <Text style={[styles.itemDescription, {marginLeft: 10}]}>
+                        End Time
+                      </Text>
+                      <TouchableHighlight
+                        onPress={() =>
+                          handleTimeChange(
+                            data.item.rowId,
+                            data.item.endTime,
+                            'end',
+                          )
+                        }
+                        style={[
+                          styles.inputStyle,
+                          {justifyContent: 'center', alignItems: 'center'},
+                        ]}>
+                        <Text style={styles.timeStyle}>{data.item.endTime}</Text>
+                      </TouchableHighlight>
+                    </View>
+                    <View style={styles.timeEntry}>
+                      <Text style={styles.itemDescription}>Break Time</Text>
+                      <TouchableHighlight
+                        onPress={() =>
+                          handleTimeChange(
+                            data.item.rowId,
+                            data.item.nonWorkedTime,
+                            'break',
+                          )
+                        }
+                        style={[
+                          styles.inputStyle,
+                          {justifyContent: 'center', alignItems: 'center'},
+                        ]}>
+                        <Text style={styles.timeStyle}>
+                          {data.item.nonWorkedTime}
+                        </Text>
+                      </TouchableHighlight>
+                    </View> 
+
+                    <View style={styles.timeEntry}>
+                      <Text style={styles.itemDescription}>Time Worked</Text>
+                      <TextInput
+                        style={styles.inputStyle}
+                        autoCapitalize="none"
+                        numberOfLines={1}
+                        onChangeText={(hours) =>
+                          handleHoursWithoutTime(
+                            data.item.rowId,
+                            hours == '' ? 0.0 : hours,
+                          )
+                        }
+                        placeholder="0.0"
+                        defaultValue={parseFloat(data.item.hours).toFixed(2)}
+                        textAlign={'center'}
+                        scrollEnabled={false}
+                        keyboardType="numeric"
+                        returnKeyType="next"
+                        underlineColorAndroid="transparent"
+                        onSubmitEditing={Keyboard.dismiss}
+                        blurOnSubmit={false}
+                      />
+                    </View>
+                  </View>
+                ) : (
+                  <View style={styles.timeEntry}>
+                    <Text style={styles.itemDescription}>Time Worked</Text>
+                    <TextInput
+                      style={styles.inputStyle}
+                      autoCapitalize="none"
+                      numberOfLines={1}
+                      onChangeText={(hours) =>
+                        handleHoursWithoutTime(
+                          data.item.rowId,
+                          hours == '' ? 0.0 : hours,
+                        )
+                      }
+                      placeholder="0.00"
+                      defaultValue={parseFloat(data.item.hours).toFixed(2)}
+                      textAlign={'center'}
+                      scrollEnabled={false}
+                      keyboardType="numeric"
+                      returnKeyType="next"
+                      underlineColorAndroid="transparent"
+                      onSubmitEditing={Keyboard.dismiss}
+                      blurOnSubmit={false}
+                    />
+                  </View>
+                )}
                 <View style={styles.timeEntry}>
-                  <Text style={styles.itemDescription}>Break Time</Text>
-                  <TouchableHighlight
+                  <Text style={styles.itemDescription}>Description</Text>
+                  <TextInput
                     style={[
                       styles.inputStyle,
-                      {justifyContent: 'center', alignItems: 'center'},
-                    ]}>
-                    <Text style={styles.timeStyle}>
-                      {data.item.nonWorkedTime}
-                    </Text>
-                  </TouchableHighlight>
-                </View> 
-
-                <View style={styles.timeEntry}>
-                  <Text style={styles.itemDescription}>Time Worked</Text>
-                  <TextInput
-                    style={styles.inputStyle}
+                      {height: 50, flex: 1, marginBottom: 10},
+                    ]}
                     autoCapitalize="none"
-                    numberOfLines={1}
-                    onChangeText={(hours) =>
-                      handleHoursChange(
-                        data.item.rowId,
-                        hours == '' ? 0.0 : hours,
-                      )
+                    numberOfLines={4}
+                    onChangeText={(value) =>
+                      handleDescription(data.item.rowId, value)
                     }
-                    placeholder="0.0"
-                    defaultValue={parseFloat(data.item.hours).toFixed(2)}
-                    textAlign={'center'}
+                    defaultValue={data.item.description}
+                    maxLength={200}
+                    multiline={true}
                     scrollEnabled={false}
-                    keyboardType="numeric"
+                    keyboardType="default"
                     returnKeyType="next"
                     underlineColorAndroid="transparent"
                     onSubmitEditing={Keyboard.dismiss}
                     blurOnSubmit={false}
                   />
                 </View>
-              </View>
-            ) : (
-              <View style={styles.timeEntry}>
-                <Text style={styles.itemDescription}>Time Worked</Text>
-                <TextInput
-                  style={styles.inputStyle}
-                  autoCapitalize="none"
-                  numberOfLines={1}
-                  onChangeText={(hours) =>
-                    handleHoursChange(
-                      data.item.rowId,
-                      hours == '' ? 0.0 : hours,
-                    )
-                  }
-                  placeholder="0.00"
-                  defaultValue={parseFloat(data.item.hours).toFixed(2)}
-                  textAlign={'center'}
-                  scrollEnabled={false}
-                  keyboardType="numeric"
-                  returnKeyType="next"
-                  underlineColorAndroid="transparent"
-                  onSubmitEditing={Keyboard.dismiss}
-                  blurOnSubmit={false}
-                />
-              </View>
-            )}
-            <View style={styles.timeEntry}>
-              <Text style={styles.itemDescription}>Description</Text>
-              <TextInput
-                style={[
-                  styles.inputStyle,
-                  {height: 50, flex: 1, marginBottom: 10},
-                ]}
-                autoCapitalize="none"
-                numberOfLines={4}
-                onChangeText={(value) =>
-                  handleDescriptionChange(data.item.rowId, value)
-                }
-                defaultValue={data.item.description}
-                maxLength={200}
-                multiline={true}
-                scrollEnabled={false}
-                keyboardType="default"
-                returnKeyType="next"
-                underlineColorAndroid="transparent"
-                onSubmitEditing={Keyboard.dismiss}
-                blurOnSubmit={false}
-              />
-            </View>
 
-            {/* for uploading attachments */}
-            <View style={styles.timeEntry}>
-              <Text style={styles.itemDescription}>Upload File</Text>
-              <View style={{marginLeft: 20, alignContent: 'flex-start'}}>
-                <TouchableOpacity
-                  style={{
-                    width: 100,
-                    borderWidth: 1,
-                    alignItems: 'center',
-                    borderRadius: 5,
-                    backgroundColor: APPYELLOW,
-                  }}
-                  onPress={() => addAttachment(data.item.rowId)}>
-                  <Text>Choose Files</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* Display attached files */}
-            {data.item.timesheetFileList && data.item.timesheetFileList.length > 0 && (
-              <View
-                style={{
-                  flexDirection: 'col',
-                  alignItems: 'flex-start',
-                  marginBottom: 10,
-                }}>
-                <View style={{width: '100%'}}>
-                  <Text style={styles.itemDescription}>Download Files</Text>
-                </View>
-                <View style={{width: '100%'}}>
-                  {data.item.timesheetFileList?.map((file, index) => (
+                {/* for uploading attachments */}
+                <View style={styles.timeEntry}>
+                  <Text style={styles.itemDescription}>Upload File</Text>
+                  <View style={{marginLeft: 20, alignContent: 'flex-start'}}>
                     <TouchableOpacity
-                      key={file.timesheetFileId || index}
                       style={{
-                        flexDirection: 'row',
+                        width: 100,
+                        borderWidth: 1,
                         alignItems: 'center',
-                        paddingVertical: 6,
-                        borderBottomWidth: 0.5,
-                        borderColor: '#ccc',
+                        borderRadius: 5,
+                        backgroundColor: APPYELLOW,
+                        paddingVertical: 8,
                       }}
-                      onPress={() =>
-                        Alert.alert('File Download', `Downloading: ${file.fileName}`)
-                      }>
-                      <Text
-                        style={[styles.fileText, {flex: 1}]}
-                        numberOfLines={1}>
-                        {file.fileName}
-                      </Text>
-                      <MaterialCommunityIcons
-                        name="download"
-                        size={18}
-                        color={APPPRIMARYCOLOR}
-                        style={{marginLeft: 10}}
-                      />
+                      onPress={() => addAttachment(data.item.rowId)}>
+                      <Text style={{color: APPBLACK, fontWeight: 'bold'}}>Choose Files</Text>
                     </TouchableOpacity>
-                  ))}
+                  </View>
                 </View>
+
+                {/* Display uploaded files */}
+                <View
+                  style={{
+                    flexDirection: 'col',
+                    alignItems: 'flex-start',
+                    marginBottom: 10,
+                  }}>
+                  <View style={{width: '100%'}}>
+                    {singleFile[data.item.rowId]?.map((item, idx) => (
+                      <View key={idx} style={styles.fileItem}>
+                        <Text style={styles.fileName}>{item.fileName}</Text>
+                        <View style={styles.actions}>
+                          {item.type && item.type.startsWith('image/') && (
+                            <TouchableOpacity
+                              onPress={() => handlePreview(item)}
+                              style={styles.iconButton}>
+                              <MaterialCommunityIcons name="eye" size={20} color={APPPRIMARYCOLOR} />
+                            </TouchableOpacity>
+                          )}
+                          <TouchableOpacity
+                            onPress={() =>
+                              handleDelete(item.fileName, data.item.rowId)
+                            }
+                            style={styles.deleteButton}>
+                            <Text style={styles.submitLabel}>Delete</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+
+                {/* Display existing files */}
+                {data.item.timesheetFileList &&
+                  data.item.timesheetFileList.filter(
+                    (file) => file.timesheetFileId !== -1,
+                  ).length > 0 && (
+                    <View
+                      style={{
+                        flexDirection: 'col',
+                        alignItems: 'flex-start',
+                        marginBottom: 10,
+                      }}>
+                      <View style={{width: '100%'}}>
+                        <Text style={styles.itemDescription}>Download Files</Text>
+                      </View>
+                      <View style={{width: '100%'}}>
+                        {data.item.timesheetFileList?.map((file, index) => {
+                          if (file.timesheetFileId == -1) {
+                            return null;
+                          }
+                          return (
+                            <TouchableOpacity
+                              key={file.timesheetFileId || index}
+                              style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                paddingVertical: 6,
+                                borderBottomWidth: 0.5,
+                                borderColor: '#ccc',
+                              }}
+                              onPress={() =>
+                                handleManualTimesheetDownload(
+                                  file.timesheetFileId,
+                                  file.fileName,
+                                )
+                              }>
+                              <Text
+                                style={[styles.fileText, {flex: 1}]}
+                                numberOfLines={1}>
+                                {file.fileName}
+                              </Text>
+                              <MaterialCommunityIcons
+                                name="download"
+                                size={18}
+                                color={APPPRIMARYCOLOR}
+                                style={{marginLeft: 10}}
+                              />
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    </View>
+                  )}
               </View>
-            )}
-          </View>
-        </TouchableHighlight>
-      </Animated.View>
+            </View>
+          </TouchableHighlight>
+        </View>
+      </View>
     );
   };
 
@@ -481,7 +562,7 @@ const TestSwipeList = () => {
           key={changed}
           extraData={changed}
           renderItem={renderItem}
-          keyExtractor={(item, index) => item.rowId}
+          keyExtractor={(item, index) => item.rowId.toString()}
           renderHiddenItem={renderHiddenItem}
           leftOpenValue={75}
           rightOpenValue={-150}
@@ -502,6 +583,9 @@ const TestSwipeList = () => {
 };
 
 const styles = StyleSheet.create({
+  submitLayout: {
+    alignItems: 'flex-end',
+  },
   container: {
     margin: 5,
   },
@@ -512,6 +596,20 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     color: '#333',
   },
+  itemHeaderSplit: {
+    fontSize: FONT_SIZE_18,
+    color: APPBLACK,
+    flexWrap: 'wrap',
+    fontWeight: 'bold',
+    paddingBottom: 10,
+  },
+  itemHeader: {
+    fontSize: FONT_SIZE_17,
+    color: APPPRIMARYCOLOR,
+    flexWrap: 'wrap',
+    fontWeight: 'bold',
+    paddingRight: 10,
+  },
   shadowBox: {
     backgroundColor: APPWHITE,
     borderRadius: 5,
@@ -521,6 +619,11 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 5,
     justifyContent: 'center',
+  },
+  dropDown: {
+    height: 40,
+    width: 150,
+    borderWidth: 1,
   },
   rowFront: {
     backgroundColor: '#FFF',
@@ -556,6 +659,12 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 15,
   },
+  visibleContentContainer: {
+    flex: 1,
+  },
+  cardContent: {
+    flex: 1,
+  },
   rowBack: {
     alignItems: 'center',
     backgroundColor: '#DDD',
@@ -567,6 +676,13 @@ const styles = StyleSheet.create({
     margin: 5,
     marginBottom: 15,
     borderRadius: 5,
+  },
+  hiddenContentContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingLeft: 15,
   },
   backRightBtn: {
     alignItems: 'flex-end',
@@ -587,6 +703,10 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 5,
     borderBottomRightRadius: 5,
   },
+  backTextWhite: {
+    color: '#FFF',
+    fontWeight: 'bold',
+  },
   trash: {
     height: 25,
     width: 25,
@@ -606,6 +726,18 @@ const styles = StyleSheet.create({
     alignContent: 'center',
     alignItems: 'center',
   },
+  inputStyleDisabled: {
+    fontSize: FONT_SIZE_RES_14,
+    borderRadius: 10,
+    marginLeft: 5,
+    width: 70,
+    color: APPLIGHTGREY,
+    fontWeight: 'bold',
+    height: 42,
+    alignContent: 'center',
+    borderColor: APPPRIMARYCOLOR,
+    borderWidth: 1,
+  },
   inputStyle: {
     fontSize: FONT_SIZE_RES_14,
     borderRadius: 10,
@@ -624,10 +756,143 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     marginTop: 10,
   },
+  savebutton: {
+    backgroundColor: APPBUTTON,
+    color: APPBLACK,
+    paddingTop: 8,
+    borderRadius: 5,
+    marginLeft: 35,
+    width: 100,
+    marginRight: 25,
+    marginTop: 25,
+    height: 40,
+    alignItems: 'center',
+  },
+  savebuttonDisabled: {
+    backgroundColor: '#999',
+    color: APPWHITE,
+    paddingTop: 8,
+    borderRadius: 5,
+    marginLeft: 35,
+    width: 100,
+    marginRight: 25,
+    marginTop: 25,
+    height: 40,
+    alignItems: 'center',
+  },
+  saveLabel: {
+    color: APPBLACK,
+    fontSize: FONT_SIZE_16,
+    alignSelf: 'center',
+  },
+  saveLayout: {
+    alignItems: 'flex-end',
+  },
+  timeFieldLayout: {
+    alignItems: 'flex-start',
+    alignItems: 'center',
+    alignContent: 'center',
+    justifyContent: 'center',
+    flex: 1,
+    height: 50,
+    width: 20,
+    borderWidth: 1,
+    borderStyle: 'solid',
+    borderColor: APPPRIMARYCOLOR,
+  },
+  submitbutton: {
+    backgroundColor: APPBUTTON,
+    color: APPWHITE,
+    paddingTop: 8,
+    borderRadius: 5,
+    marginLeft: 35,
+    width: 100,
+    marginRight: 25,
+    marginTop: 25,
+    height: 40,
+    alignItems: 'center',
+  },
+  button: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 4,
+  },
   fileText: {
     fontSize: FONT_SIZE_16,
     color: '#000',
     marginRight: 8,
+  },
+  icon: {
+    marginTop: 2,
+  },
+  submitbuttonDisabled: {
+    backgroundColor: APPDARKGREY,
+    color: APPBLACK,
+    paddingTop: 8,
+    borderRadius: 5,
+    marginLeft: 35,
+    width: 100,
+    marginRight: 25,
+    marginTop: 25,
+    height: 40,
+    alignItems: 'center',
+  },
+  textStyle: {
+    fontSize: FONT_SIZE_16,
+    color: APPBLACK,
+    marginVertical: 10,
+  },
+  textStyle1: {
+    fontSize: FONT_SIZE_16,
+    color: APPWHITE,
+    marginVertical: 10,
+  },
+  previewImage: {
+    width: '100%',
+    height: '90%',
+  },
+  fileItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderColor: '#ccc',
+  },
+  fileName: {
+    flex: 1,
+    fontSize: FONT_SIZE_16,
+  },
+  iconButton: {
+    marginRight: 10,
+  },
+  deleteButton: {
+    backgroundColor: APPBUTTON,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 5,
+  },
+  actions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  deleteText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  modalBackground: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    width: '90%',
+    height: '70%',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    overflow: 'hidden',
+    padding: 10,
   },
 });
 
@@ -655,6 +920,16 @@ const pickerSelectStyles = StyleSheet.create({
     borderColor: APPPRIMARYCOLOR,
     borderRadius: 10,
     marginLeft: 10,
+  },
+  textStyle: {
+    fontSize: FONT_SIZE_16,
+    color: APPBLACK,
+    marginVertical: 10,
+  },
+  textStyle1: {
+    fontSize: FONT_SIZE_16,
+    color: APPWHITE,
+    marginVertical: 10,
   },
 });
 
